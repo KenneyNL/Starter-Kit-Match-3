@@ -1,0 +1,39 @@
+[gd_scene load_steps=6 format=3 uid="uid://d1i8o2nh1b3a"]
+
+[ext_resource type="Script" uid="uid://behhpa56mt1uc" path="res://scripts/particles.gd" id="1_2j51h"]
+[ext_resource type="Texture2D" uid="uid://csuibxrxjmun2" path="res://sprites/particles/sparkle.png" id="1_ah5qx"]
+
+[sub_resource type="Curve" id="Curve_ah5qx"]
+_data = [Vector2(0, 1), 0.0, 0.39930877, 0, 0, Vector2(1, 0), -1.7683667, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_ispy0"]
+curve = SubResource("Curve_ah5qx")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ah5qx"]
+lifetime_randomness = 0.5
+particle_flag_disable_z = true
+emission_shape = 6
+emission_ring_axis = Vector3(0, 0, 0)
+emission_ring_height = 0.0
+emission_ring_radius = 32.0
+emission_ring_inner_radius = 10.0
+emission_ring_cone_angle = 90.0
+direction = Vector3(1, 0, 1)
+spread = 180.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.19999999
+scale_max = 0.59999996
+scale_curve = SubResource("CurveTexture_ispy0")
+
+[node name="GPUParticles2D" type="GPUParticles2D"]
+emitting = false
+amount = 4
+texture = ExtResource("1_ah5qx")
+one_shot = true
+speed_scale = 2.0
+explosiveness = 0.7
+randomness = 1.0
+local_coords = true
+process_material = SubResource("ParticleProcessMaterial_ah5qx")
+script = ExtResource("1_2j51h")

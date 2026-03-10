@@ -1,0 +1,31 @@
+[gd_scene load_steps=12 format=3 uid="uid://b8cjd5xlk3m1p"]
+
+[ext_resource type="Script" uid="uid://bs7j0wtyby7nv" path="res://scripts/main.gd" id="1_ig7tw"]
+[ext_resource type="PackedScene" uid="uid://bqn0mkisu2aba" path="res://scenes/tile.tscn" id="2_0xm2m"]
+[ext_resource type="PackedScene" uid="uid://d1i8o2nh1b3a" path="res://scenes/sparkles.tscn" id="3_kek77"]
+[ext_resource type="Texture2D" uid="uid://2d4u3m6gcbdy" path="res://sprites/tiles/tile-godot.png" id="3_lquwl"]
+[ext_resource type="Texture2D" uid="uid://bq4g2gd7da3df" path="res://sprites/tiles/tile-spikes.png" id="4_7mycd"]
+[ext_resource type="Texture2D" uid="uid://bpmympuobpc5m" path="res://sprites/tiles/tile-gem.png" id="5_272bh"]
+[ext_resource type="Texture2D" uid="uid://df3gu8bu3jpop" path="res://sprites/tiles/tile-grass.png" id="6_272bh"]
+[ext_resource type="Texture2D" uid="uid://bd2a1b0sxat0b" path="res://sprites/tiles/tile-kenney.png" id="7_5vw27"]
+[ext_resource type="Texture2D" uid="uid://mpsuadf8lyxi" path="res://sprites/backgrounds/background.png" id="8_5vw27"]
+[ext_resource type="Texture2D" uid="uid://c26xoi1o70ttr" path="res://sprites/cursors/cursor-hand-open.png" id="9_4c57u"]
+[ext_resource type="Texture2D" uid="uid://eailhed83ju8" path="res://sprites/cursors/cursor-hand-closed.png" id="10_efxa6"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_ig7tw")
+offset = 68
+tile_scene = ExtResource("2_0xm2m")
+sparkles_scene = ExtResource("3_kek77")
+textures = Array[Texture2D]([ExtResource("3_lquwl"), ExtResource("4_7mycd"), ExtResource("5_272bh"), ExtResource("6_272bh"), ExtResource("7_5vw27")])
+open_hand_cursor = ExtResource("9_4c57u")
+closed_hand_cursor = ExtResource("10_efxa6")
+
+[node name="Background" type="TextureRect" parent="."]
+offset_right = 1280.0
+offset_bottom = 720.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+texture = ExtResource("8_5vw27")
+
+[node name="Board" type="Node2D" parent="."]

@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://bqn0mkisu2aba"]
+
+[ext_resource type="Script" uid="uid://cuqt2eu222vwr" path="res://scripts/tile.gd" id="1_hisf2"]
+[ext_resource type="Texture2D" uid="uid://2d4u3m6gcbdy" path="res://sprites/tiles/tile-godot.png" id="2_hisf2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0e48y"]
+size = Vector2(64, 64)
+
+[node name="Node2D" type="Area2D"]
+script = ExtResource("1_hisf2")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_hisf2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_0e48y")
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]
