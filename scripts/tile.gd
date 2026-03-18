@@ -3,7 +3,7 @@ extends Area2D
 signal tile_pressed(pos)
 
 var type:String
-var grid_pos:Vector2i
+var grid_position:Vector2i
 
 # Highlight tile when hovering mouse
 
@@ -34,7 +34,7 @@ func _input_event(_viewport, event, _shape_idx):
 	
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			emit_signal("tile_pressed", grid_pos)
+			tile_pressed.emit(grid_position)
 
 # Animations when tile is moving
 
@@ -54,4 +54,4 @@ func move_to(target_position: Vector2, play_sound: bool = true):
 
 func _on_move_finished():
 	
-	Audio.play("res://sounds/tile-land.ogg", false, 1.2 - (grid_pos.y * 0.05), 0.2)
+	Audio.play("res://sounds/tile-land.ogg", false, 1.2 - (grid_position.y * 0.05), 0.2)

@@ -3,7 +3,7 @@ extends Node2D
 @export_subgroup("Properties")
 @export var width: int = 8
 @export var height: int = 8
-@export var offset: int = 64
+@export var offset: int = 68
 
 @export_subgroup("Scenes")
 @export var tile_scene: PackedScene 
@@ -34,61 +34,49 @@ func _ready():
 	randomize()
 	
 	setup_grid_array() 
-	center_grid_on_screen() 
-	spawn_initial_pieces() 
+	process_board_state()
 	
-	get_viewport().size_changed.connect(reposition_board)
+	center_grid_on_screen() 
+	
+	get_viewport().size_changed.connect(center_grid_on_screen)
+
+# Centers the board on-screen, the above conection ensures the board is centered after resizing the window
 
 func center_grid_on_screen():
 	
-	container.position = (get_viewport_rect().size / 2.0) - (Vector2(width, height) * offset / 2.0)
-	container.position += Vector2(offset / 2.0, offset / 2.0)
+	container.position = get_viewport_rect().size / 2.0 - Vector2(width - 1, height - 1) * offset / 2.0
 
-func reposition_board():
-	
-	center_grid_on_screen()
-	for x in width:
-		for y in height:
-			var piece = grid[x][y]
-			if piece: piece.position = grid_to_pixel(x, y)
+# Initialize grid
 
 func setup_grid_array():
 	
 	grid = []
 	for x in width:
 		grid.append([])
-		for y in height:
-			grid[x].append(null)
-
-func spawn_initial_pieces():
+		grid[x].resize(height)
+		grid[x].fill(null)
+		
+	# Spawn initial pieces
 	
 	for x in width:
 		for y in height:
 			spawn_at(x, y)
 
+# Spawn a new tile at a certain grid position
+
 func spawn_at(x, y):
 	
 	var created_piece = tile_scene.instantiate() 
-	var random_index = randi() % textures.size() 
+	var random_index = randi_range(0, textures.size() - 1)
 	
 	container.add_child(created_piece) 
 	
 	created_piece.set_tile_type(str(random_index), textures[random_index]) 
 	created_piece.tile_pressed.connect(_on_tile_pressed) 
-	created_piece.grid_pos = Vector2i(x, y) 
+	created_piece.grid_position = Vector2i(x, y) 
 	created_piece.position = grid_to_pixel(x, y) 
 	
 	grid[x][y] = created_piece
-
-# Coordinate utilities
-
-func grid_to_pixel(column: int, row: int) -> Vector2:
-	
-	return Vector2(offset * column, offset * row)
-
-func is_within_grid(pos: Vector2i) -> bool:
-	
-	return pos.x >= 0 and pos.x < width and pos.y >= 0 and pos.y < height
 
 # Interaction
 
@@ -150,37 +138,29 @@ func swap_pieces(a: Vector2i, b: Vector2i):
 		grid[a.x][a.y] = piece_b
 		grid[b.x][b.y] = piece_a
 		
-		piece_a.grid_pos = b
-		piece_b.grid_pos = a
+		piece_a.grid_position = b
+		piece_b.grid_position = a
 		
 		piece_a.move_to(grid_to_pixel(b.x, b.y), false)
 		piece_b.move_to(grid_to_pixel(a.x, a.y), false)
 
 func find_matches() -> Array:
 	
-	var matched_pieces = []
-	
-	# Y
+	var matched_dict = {}
+
 	for y in height:
 		for x in range(width - 2):
-			var p1 = grid[x][y]
-			var p2 = grid[x+1][y]
-			var p3 = grid[x+2][y]
+			var p1 = grid[x][y]; var p2 = grid[x+1][y]; var p3 = grid[x+2][y]
 			if p1 and p2 and p3 and p1.type == p2.type and p1.type == p3.type:
-				for p in [p1, p2, p3]:
-					if not p in matched_pieces: matched_pieces.append(p)
-	
-	# X
+				for p in [p1, p2, p3]: matched_dict[p] = true
+
 	for x in width:
 		for y in range(height - 2):
-			var p1 = grid[x][y]
-			var p2 = grid[x][y+1]
-			var p3 = grid[x][y+2]
+			var p1 = grid[x][y]; var p2 = grid[x][y+1]; var p3 = grid[x][y+2]
 			if p1 and p2 and p3 and p1.type == p2.type and p1.type == p3.type:
-				for p in [p1, p2, p3]:
-					if not p in matched_pieces: matched_pieces.append(p)
-	
-	return matched_pieces
+				for p in [p1, p2, p3]: matched_dict[p] = true
+
+	return matched_dict.keys()
 
 func process_board_state():
 	
@@ -196,7 +176,7 @@ func process_board_state():
 			effect.position = piece.position
 			container.add_child(effect)
 			
-			grid[piece.grid_pos.x][piece.grid_pos.y] = null
+			grid[piece.grid_position.x][piece.grid_position.y] = null
 			
 			var tween = piece.create_tween()
 			tween.tween_property(piece, "scale", Vector2.ZERO, 0.2)
@@ -208,7 +188,6 @@ func process_board_state():
 		
 		matches = find_matches()
 	
-	combo_count = 0 
 	is_swapping = false
 
 func collapse_columns():
@@ -220,7 +199,7 @@ func collapse_columns():
 					if grid[x][k] != null:
 						grid[x][y] = grid[x][k]
 						grid[x][k] = null
-						grid[x][y].grid_pos = Vector2i(x, y)
+						grid[x][y].grid_position = Vector2i(x, y)
 						grid[x][y].move_to(grid_to_pixel(x, y))
 						break
 	await get_tree().create_timer(0.3).timeout
@@ -234,6 +213,16 @@ func refill_board():
 				grid[x][y].position.y -= offset * 2 
 				grid[x][y].move_to(grid_to_pixel(x, y))
 	await get_tree().create_timer(0.3).timeout
+
+# Utilities for coordinates
+
+func grid_to_pixel(column: int, row: int) -> Vector2:
+	
+	return Vector2(offset * column, offset * row)
+
+func is_within_grid(pos: Vector2i) -> bool:
+	
+	return pos.x >= 0 and pos.x < width and pos.y >= 0 and pos.y < height
 
 # Utilities
 
