@@ -3,7 +3,11 @@ extends Node2D
 @export_subgroup("Properties")
 @export var width: int = 8
 @export var height: int = 8
+
+# offset here is also the size of each tile (match element)
 @export var offset: int = 68
+# the extent of dragging that will result to a swap
+@export var threshold:int = 32
 
 @export_subgroup("Scenes")
 @export var tile_scene: PackedScene 
@@ -22,6 +26,7 @@ extends Node2D
 
 var grid = []
 var first_touch = Vector2i(-1, -1)
+# is_swapping prevents player swaps again during swap/cancelation
 var is_swapping = false
 var combo_count: int = 0
 
@@ -51,6 +56,7 @@ func center_grid_on_screen():
 func setup_grid_array():
 	
 	grid = []
+	# each x represents one column of grid and has length of height
 	for x in width:
 		grid.append([])
 		grid[x].resize(height)
@@ -65,8 +71,8 @@ func setup_grid_array():
 # Spawn a new tile at a certain grid position
 
 func spawn_at(x, y):
-	
-	var created_piece = tile_scene.instantiate() 
+	# create a random piece
+	var created_piece:Tile = tile_scene.instantiate() 
 	var random_index = randi_range(0, textures.size() - 1)
 	
 	container.add_child(created_piece) 
@@ -89,22 +95,30 @@ func _on_tile_pressed(grid_position: Vector2i):
 func _input(event):
 	
 	if event is InputEventMouseButton:
+		# this event is trigered when left mouse releases
 		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 			if first_touch != Vector2i(-1, -1):
 				var local_mouse_pos = container.get_local_mouse_position()
 				calculate_swipe(local_mouse_pos)
 
+# check which direction to swipe 
+# given the gird index of tile where mouse is pressed
+# and the point where mouse releases
 func calculate_swipe(final_pos: Vector2):
 	
+	# convert grid index to actual position and calculate distance dragged with release location
 	var difference = final_pos - grid_to_pixel(first_touch.x, first_touch.y)
 	
-	if difference.length() > 32:
+	# if the distance dragged exceeds a threshold 
+	# find the tile that will be swapped 
+	if difference.length() > threshold:
 		var other_touch = first_touch
 		if abs(difference.x) > abs(difference.y): # Horizontal dragging
 			other_touch.x += 1 if difference.x > 0 else -1
 		else: # Vertical dragging
 			other_touch.y += 1 if difference.y > 0 else -1
-		
+		# if the tile that will be swapped is within the boundary
+		# play music and swap
 		if is_within_grid(other_touch):
 			handle_swap_logic(first_touch, other_touch)
 			Audio.play("res://sounds/tile-swap.ogg", false, randf_range(0.8, 1.2), 0.3)
@@ -115,10 +129,9 @@ func calculate_swipe(final_pos: Vector2):
 # Game loop
 
 func handle_swap_logic(pos_a: Vector2i, pos_b: Vector2i):
-	
 	is_swapping = true
 	swap_pieces(pos_a, pos_b)
-	
+	# pause a bit so user can see swapping happening
 	await get_tree().create_timer(0.3).timeout
 	
 	if find_matches().size() > 0:
@@ -131,8 +144,8 @@ func handle_swap_logic(pos_a: Vector2i, pos_b: Vector2i):
 
 func swap_pieces(a: Vector2i, b: Vector2i):
 	
-	var piece_a = grid[a.x][a.y]
-	var piece_b = grid[b.x][b.y]
+	var piece_a:Tile = grid[a.x][a.y]
+	var piece_b:Tile = grid[b.x][b.y]
 	
 	if piece_a and piece_b:
 		grid[a.x][a.y] = piece_b
@@ -144,11 +157,15 @@ func swap_pieces(a: Vector2i, b: Vector2i):
 		piece_a.move_to(grid_to_pixel(b.x, b.y), false)
 		piece_b.move_to(grid_to_pixel(a.x, a.y), false)
 
+# iterate the entire board and check for matches
 func find_matches() -> Array:
-	
+	# stores all element that are matched and will be canceled
 	var matched_dict = {}
 
 	for y in height:
+		# for each row check if the 2 element on its right matches with it
+		# row is only iterated to width - 2 because 
+		# checking match at the 2nd last and last column are not needed
 		for x in range(width - 2):
 			var p1 = grid[x][y]; var p2 = grid[x+1][y]; var p3 = grid[x+2][y]
 			if p1 and p2 and p3 and p1.type == p2.type and p1.type == p3.type:
@@ -171,6 +188,7 @@ func process_board_state():
 		combo_count += 1
 		Audio.play("res://sounds/tile-match.ogg", true, 1.0 + (combo_count * 0.1))
 		
+		# remove matches with tween animation
 		for piece in matches:
 			var effect = sparkles_scene.instantiate()
 			effect.position = piece.position
@@ -192,8 +210,11 @@ func process_board_state():
 
 func collapse_columns():
 	
+	# for every column, iterate from bottom to top
 	for x in width:
 		for y in range(height - 1, -1, -1):
+			# if a tile is empty, check if there is any tile above it
+			# if there is, move the tile above to it
 			if grid[x][y] == null:
 				for k in range(y - 1, -1, -1):
 					if grid[x][k] != null:
@@ -210,7 +231,12 @@ func refill_board():
 		for y in height:
 			if grid[x][y] == null:
 				spawn_at(x, y)
-				grid[x][y].position.y -= offset * 2 
+				# the current spawning mechanism will spawn
+				# tile 5 tiles above its desired position and "drop" it down
+				# since maximum amount of cancel made per column is 5
+				# tile will always be dropped above the screen
+				grid[x][y].position.y -= offset * 4
+				print(grid[x][y].position.y)
 				grid[x][y].move_to(grid_to_pixel(x, y))
 	await get_tree().create_timer(0.3).timeout
 

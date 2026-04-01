@@ -1,8 +1,10 @@
+class_name Tile
 extends Area2D
 
 signal tile_pressed(pos)
 
 var type:String
+# grid position is the index of the tile in grid array
 var grid_position:Vector2i
 
 # Highlight tile when hovering mouse
@@ -22,16 +24,18 @@ func _on_mouse_exited():
 	tween.tween_property($Sprite2D, "modulate", Color(1, 1, 1), 0.1)
 
 # Set piece them when initializing
-
+# assign its texture and type id
+# id is the index of texure in texures array in main
 func set_tile_type(id: String, texture: Texture2D):
 	
 	type = id
 	$Sprite2D.texture = texture
 
 # Letting the main code know when a tile has been pressed
+# Also pass the grid position to main when pressed 
+# so main can track it when dragging the tile
 
 func _input_event(_viewport, event, _shape_idx):
-	
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			tile_pressed.emit(grid_position)
