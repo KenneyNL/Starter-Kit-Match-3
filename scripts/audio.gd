@@ -59,10 +59,3 @@ func _process(_delta):
 		player.volume_db = linear_to_db(data["volume"])
 		
 		player.play()
-
-# Utility for decibels
-
-func linear_to_db(linear: float) -> float:
-	if linear > 0:
-		return 20.0 * log(linear) / log(10.0)
-	return -80.0
